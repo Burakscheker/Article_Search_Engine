@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,15 +17,16 @@ public class HashMap<K, V> implements MyMap<K, V> {
     private int size;
     private long collisionCount;
 
-    private final double maxLoadFactor;
-    private final int hashType;
-    private final int collisionType;
+    private double maxLoadFactor;
+    private int hashType;
+    private int collisionType;
 
     private int primeQ;
-    private static final int DEFAULT_INITIAL_CAPACITY = 11;
+
+    private static final int BASLANGIC_KAPASITE = 131;
 
     public HashMap(double maxLoadFactor, int hashType, int collisionType) {
-        this.capacity = findNextPrime(DEFAULT_INITIAL_CAPACITY);
+        this.capacity = findNextPrime(BASLANGIC_KAPASITE);
 
         this.maxLoadFactor = maxLoadFactor;
         this.hashType = hashType;
@@ -46,7 +48,6 @@ public class HashMap<K, V> implements MyMap<K, V> {
         if ((size + 1.0) / capacity > maxLoadFactor) {
             resize();
         }
-
         insert(key, value);
     }
 
@@ -62,15 +63,16 @@ public class HashMap<K, V> implements MyMap<K, V> {
         for (int i = 0; i < capacity; i++) {
             int index = compress(hashCode + i * step);
 
-            if (keys[index] != null && keys[index].equals(key)) {
-                return values[index];
+            if (keys[index] != null) {
+                if (keys[index].equals(key)) {
+                    return values[index];
+                }
             }
 
             if (keys[index] == null) {
                 return null;
             }
         }
-
         return null;
     }
 
@@ -101,8 +103,6 @@ public class HashMap<K, V> implements MyMap<K, V> {
                 return;
             }
         }
-
-        throw new RuntimeException("Hash table is completely full. Cannot insert key: " + key);
     }
 
     private void resize() {
@@ -119,15 +119,14 @@ public class HashMap<K, V> implements MyMap<K, V> {
             updatePrimeQ();
         }
 
-        long oldCollisionCount = this.collisionCount;
+        long eskiCollision = this.collisionCount;
 
         for (int i = 0; i < oldKeys.length; i++) {
             if (oldKeys[i] != null) {
                 insert(oldKeys[i], oldValues[i]);
             }
         }
-
-        this.collisionCount = oldCollisionCount;
+        this.collisionCount = eskiCollision;
     }
 
     private int hash(K key) {
@@ -150,15 +149,19 @@ public class HashMap<K, V> implements MyMap<K, V> {
 
     private int hash_PAF(String key) {
         int hash = 0;
-        int z = 33;
+        int z = 41;
 
-        String lowerKey = key.toLowerCase();
-
-        for (int i = 0; i < lowerKey.length(); i++) {
-            char ch = lowerKey.charAt(i);
+        for (int i = 0; i < key.length(); i++) {
+            char ch = key.charAt(i);
+            int charValue = 0;
 
             if (ch >= 'a' && ch <= 'z') {
-                int charValue = (int) ch - (int) 'a' + 1;
+                charValue = (int) ch - (int) 'a' + 1;
+            } else if (ch >= 'A' && ch <= 'Z') {
+                charValue = (int) ch - (int) 'A' + 1;
+            }
+
+            if (charValue > 0) {
                 hash = (hash * z) + charValue;
             }
         }
@@ -167,7 +170,6 @@ public class HashMap<K, V> implements MyMap<K, V> {
 
     private int secondaryHash_DH(int hashCode) {
         int h = Math.abs(hashCode);
-
         if (h % primeQ == 0) {
             return 1;
         }
@@ -175,7 +177,9 @@ public class HashMap<K, V> implements MyMap<K, V> {
     }
 
     private int compress(int hashCode) {
-        return Math.abs(hashCode) % capacity;
+        long positiveHash = hashCode;
+        if (positiveHash < 0) positiveHash = -positiveHash;
+        return (int) (positiveHash % capacity);
     }
 
     @Override
@@ -190,7 +194,7 @@ public class HashMap<K, V> implements MyMap<K, V> {
 
     @Override
     public void clear() {
-        this.capacity = findNextPrime(DEFAULT_INITIAL_CAPACITY);
+        this.capacity = findNextPrime(BASLANGIC_KAPASITE);
         this.keys = (K[]) new Object[this.capacity];
         this.values = (V[]) new Object[this.capacity];
         this.size = 0;
@@ -213,7 +217,6 @@ public class HashMap<K, V> implements MyMap<K, V> {
     @Override
     public List<K> getKeys() {
         List<K> keyList = new ArrayList<>();
-
         for (int i = 0; i < capacity; i++) {
             if (keys[i] != null) {
                 keyList.add(keys[i]);
@@ -228,32 +231,24 @@ public class HashMap<K, V> implements MyMap<K, V> {
 
     private int findPreviousPrime(int n) {
         for (int i = n - 1; i > 1; i--) {
-            if (isPrime(i)) {
-                return i;
-            }
+            if (isPrime(i)) return i;
         }
         return 2;
     }
 
     private int findNextPrime(int n) {
-        int num = n;
-        if (num <= 2) return 2;
-        if (num % 2 == 0) num++;
-        while (!isPrime(num)) {
-            num += 2;
+        if (n % 2 == 0) n++;
+        while (!isPrime(n)) {
+            n += 2;
         }
-        return num;
+        return n;
     }
 
     private boolean isPrime(int n) {
         if (n <= 1) return false;
-        if (n <= 3) return true;
-        if (n % 2 == 0 || n % 3 == 0) return false;
 
-        for (int i = 5; i * i <= n; i = i + 6) {
-            if (n % i == 0 || n % (i + 2) == 0) {
-                return false;
-            }
+        for (int i = 2; i * i <= n; i++) {
+            if (n % i == 0) return false;
         }
         return true;
     }

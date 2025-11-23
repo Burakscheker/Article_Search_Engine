@@ -1,3 +1,4 @@
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -10,54 +11,50 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         Benchmark benchmark = new Benchmark();
 
-        System.out.println("Haber Arama Motoru Başlatılıyor...");
+        System.out.println("Starting News Search Engine...");
 
-        SearchEngine engine = new SearchEngine(
-                0.8,
-                HashMap.PAF,
-                HashMap.DH
-        );
+        SearchEngine engine = new SearchEngine(0.8, HashMap.PAF, HashMap.DH);
 
-        System.out.println("'" + CSV_FILE + "' dosyasındaki makaleler yükleniyor...");
-        System.out.println("Bu işlem birkaç dakika sürebilir, lütfen bekleyin...");
+        System.out.println("Loading articles from '" + CSV_FILE + "'...");
+        System.out.println("Please wait...");
 
         engine.loadArticles(CSV_FILE);
 
-        System.out.println("\nYükleme tamamlandı!");
-        System.out.println("Toplam İndeksleme Süresi: " + engine.getIndexingTime() + " ms");
-        System.out.println("Toplam Çarpışma (Collision): " + engine.getMapCollisionCount());
-        System.out.println("Article Map Kapasitesi: " + engine.articleMap.getCapacity());
-        System.out.println("Index Map Kapasitesi: " + engine.indexMap.getCapacity());
+        System.out.println("\nLoading complete!");
+        System.out.println("Total Indexing Time: " + engine.getIndexingTime() + " ms");
+        System.out.println("Total Collisions: " + engine.getMapCollisionCount());
+        System.out.println("Article Map Capacity: " + engine.articleMap.getCapacity());
+        System.out.println("Index Map Capacity: " + engine.indexMap.getCapacity());
 
         while (true) {
-            System.out.println("\n--- ANA MENÜ ---");
-            System.out.println("1. Metin ile Arama (Search by text)");
-            System.out.println("2. ID ile Arama (Search by ID)");
-            System.out.println("3. Performans Testini Çalıştır (Run Benchmark)");
-            System.out.println("4. Çıkış (Exit)");
-            System.out.print("Seçiminiz (1-4): ");
+            System.out.println("\n--- MAIN MENU ---");
+            System.out.println("1. Search by text");
+            System.out.println("2. Search by ID");
+            System.out.println("3. Run Benchmark Tests");
+            System.out.println("4. Exit");
+            System.out.print("Choice (1-4): ");
 
             String choice = scanner.nextLine();
 
             switch (choice) {
                 case "1":
-                    System.out.print("Aramak istediğiniz metni girin: ");
+                    System.out.print("Enter search query: ");
                     String query = scanner.nextLine();
 
                     List<SearchEngine.ArticleScore> scoreResults = engine.searchByText(query);
                     String[] queryWords = engine.cleanText(query);
 
                     if (scoreResults.isEmpty()) {
-                        System.out.println("'" + query + "' için sonuç bulunamadı.");
+                        System.out.println("No results found for '" + query + "'.");
                     } else {
-                        System.out.println("\n'" + query + "' için en alakalı sonuçlar (Top 5):");
-                        System.out.println("\n--- İLGİLİLİK PUANI HESAPLAMASI (Occurrences) ---");
+                        System.out.println("\nTop 5 results for '" + query + "':");
+                        System.out.println("\n--- RELEVANCE SCORE CALCULATION (Occurrences) ---");
 
-                        final int SUTUN_GENISLIGI = 14;
+                        final int column_length = 14;
 
-                        System.out.printf("%-12s | ", "KELİME");
+                        System.out.printf("%-12s | ", "WORD");
                         for (SearchEngine.ArticleScore score : scoreResults) {
-                            System.out.printf("%-" + SUTUN_GENISLIGI + "s | ", "ID(" + score.getArticleId() + ")");
+                            System.out.printf("%-" + column_length + "s | ", "ID(" + score.getArticleId() + ")");
                         }
 
                         System.out.println("\n-------------------------------------------------------------------------------------------------");
@@ -76,49 +73,48 @@ public class Main {
                                         count = freq;
                                     }
                                 }
-                                System.out.printf("%-" + SUTUN_GENISLIGI + "d | ", count);
+                                System.out.printf("%-" + column_length + "d | ", count);
                             }
                             System.out.println();
                         }
 
                         System.out.println("-------------------------------------------------------------------------------------------------");
 
-                        System.out.printf("%-12s | ", "TOPLAM PUAN");
+                        System.out.printf("%-12s | ", "TOTAL SCORE");
                         for (SearchEngine.ArticleScore score : scoreResults) {
-                            System.out.printf("%-" + SUTUN_GENISLIGI + "d | ", score.getScore());
+                            System.out.printf("%-" + column_length + "d | ", score.getScore());
                         }
 
-                        System.out.println("\n\nMakale detaylarını görmek için '2' (ID ile Arama) kullanabilirsiniz.");
+                        System.out.println("\n\nUse option '2' to see article details.");
                     }
                     break;
 
                 case "2":
-                    System.out.print("Aramak istediğiniz makale ID'sini girin: ");
+                    System.out.print("Enter Article ID: ");
                     String id = scanner.nextLine();
 
                     Article article = engine.searchByID(id);
 
                     if (article == null) {
-                        System.out.println("'" + id + "' ID'li makale bulunamadı.");
+                        System.out.println("Article not found.");
                     } else {
                         System.out.println(article.toString());
                     }
                     break;
 
                 case "3":
-                    System.out.println("Performans Testi (8 senaryo) başlıyor...");
-                    System.out.println("Bu işlem 'search.txt' dosyasını ve CSV'yi 8 kez işleyecektir.");
+                    System.out.println("Starting Performance Tests (8 scenarios)...");
                     benchmark.runTests();
-                    System.out.println("Performans Testi tamamlandı. Ana menüye dönülüyor.");
+                    System.out.println("Benchmark complete.");
                     break;
 
                 case "4":
-                    System.out.println("Çıkış yapılıyor...");
+                    System.out.println("Exiting...");
                     scanner.close();
                     return;
 
                 default:
-                    System.out.println("Geçersiz seçim! Lütfen 1, 2, 3 veya 4 girin.");
+                    System.out.println("Invalid choice! Please enter 1, 2, 3, or 4.");
                     break;
             }
         }

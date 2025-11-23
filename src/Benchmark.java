@@ -1,3 +1,4 @@
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ public class Benchmark {
     public void runTests() {
 
         double[] loadFactors = {0.5, 0.8};
+
         int[] hashTypes = {HashMap.SSF, HashMap.PAF};
         int[] collisionTypes = {HashMap.LP, HashMap.DH};
 
@@ -20,13 +22,13 @@ public class Benchmark {
 
         List<String> searchWords = loadSearchWords(SEARCH_WORDS_FILE);
         if (searchWords.isEmpty()) {
-            System.err.println("Benchmark testi iptal edildi (search.txt okunamadı).");
+            System.out.println("Test iptal (search.txt okunamadi).");
             return;
         }
-        System.out.println(searchWords.size() + " adet arama kelimesi yüklendi.");
-        System.out.println("Benchmark testleri başlıyor. Bu işlem zaman alabilir...\n");
+        System.out.println(searchWords.size() + " search words loaded.");
+        System.out.println("Running benchmark tests...\n");
 
-        System.out.println("--- Performans Matrisi (Table 1) ---");
+        System.out.println("--- Performance Matrix (Table 1) ---");
         System.out.println("-----------------------------------------------------------------------------");
         System.out.printf("%-12s | %-12s | %-12s | %-15s | %-15s | %-15s\n",
                 "Load Factor", "Hash Func.", "Collision", "Collision Count", "Indexing Time(ms)", "Avg. Search(µs)");
@@ -61,7 +63,7 @@ public class Benchmark {
                     double avgSearchTimeMicros = avgSearchTimeNanos / 1000.0;
 
                     System.out.printf("%-12s | %-12s | %-12s | %-15d | %-15d | %-15.3f\n",
-                            String.format("%.1f (%.0f%%)", lf, lf * 100),
+                            (lf == 0.5 ? "0.5 (50%)" : "0.8 (80%)"),
                             hashNames[ht_idx],
                             collisionNames[ct_idx],
                             collisionCount,
@@ -73,21 +75,22 @@ public class Benchmark {
         }
 
         System.out.println("-----------------------------------------------------------------------------");
-        System.out.println("Benchmark testleri tamamlandı.");
+        System.out.println("Benchmark finished.");
     }
 
     private List<String> loadSearchWords(String filename) {
         List<String> words = new ArrayList<>();
-        try (Scanner scanner = new Scanner(new File(filename))) {
+        try {
+            Scanner scanner = new Scanner(new File(filename));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim().toLowerCase();
                 if (!line.isEmpty()) {
                     words.add(line);
                 }
             }
+            scanner.close();
         } catch (FileNotFoundException e) {
-            System.err.println("Hata: Arama kelimeleri dosyası bulunamadı: " + filename);
-            e.printStackTrace();
+            System.out.println("Hata: Dosya yok: " + filename);
         }
         return words;
     }

@@ -1,11 +1,14 @@
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Comparator;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class SearchEngine {
 
@@ -13,15 +16,9 @@ public class SearchEngine {
     public MyMap<String, MyMap<String, Integer>> indexMap;
 
     private HashSet<String> stopWords;
-    private String delimiterRegex;
-
     private long indexingTimeMillis;
 
-    private static final String CSV_SPLIT_REGEX = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
-
-    private final double defaultInnerMapLF;
-    private final int defaultInnerMapHash;
-    private final int defaultInnerMapCollision;
+    private static final Pattern CSV_PATTERN = Pattern.compile("\"([^\"]*)\"|[^,]+");
 
     public static class ArticleScore {
         String articleId;
@@ -32,12 +29,12 @@ public class SearchEngine {
             this.score = score;
         }
 
-        int getScore() {
-            return score;
+        public String getArticleId() {
+            return articleId;
         }
 
-        String getArticleId() {
-            return articleId;
+        public int getScore() {
+            return score;
         }
     }
 
@@ -45,47 +42,49 @@ public class SearchEngine {
         this.articleMap = new HashMap<>(loadFactor, hashType, collisionType);
         this.indexMap = new HashMap<>(loadFactor, hashType, collisionType);
 
-        this.defaultInnerMapLF = loadFactor;
-        this.defaultInnerMapHash = hashType;
-        this.defaultInnerMapCollision = collisionType;
-
         this.indexingTimeMillis = 0;
         this.stopWords = new HashSet<>();
-        this.delimiterRegex = "[\\p{Punct}\\s]";
 
         loadStopWords("stop_words_en.txt");
     }
 
     private void loadStopWords(String filename) {
-        try (Scanner scanner = new Scanner(new File(filename))) {
+        try {
+            Scanner scanner = new Scanner(new File(filename));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim().toLowerCase();
                 if (!line.isEmpty()) {
                     stopWords.add(line);
                 }
             }
+            scanner.close();
         } catch (FileNotFoundException e) {
-            System.err.println("Uyarı: Stop words dosyası bulunamadı: " + filename);
+            System.out.println("Uyari: Stop words dosyasi bulunamadi.");
         }
     }
 
     public void loadArticles(String csvFile) {
-        long startTime = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
 
-        try (Scanner scanner = new Scanner(new File(csvFile), "UTF-8")) {
+        try {
+            Scanner scanner = new Scanner(new File(csvFile), "UTF-8");
 
-            if (scanner.hasNextLine()) { scanner.nextLine(); }
+            if (scanner.hasNextLine()) scanner.nextLine();
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.trim().isEmpty()) continue;
 
-                String[] fields = line.split(CSV_SPLIT_REGEX, -1);
+                String[] fields = parseCSVLineFast(line);
 
                 if (fields.length != 11) continue;
 
                 for (int i = 0; i < fields.length; i++) {
-                    fields[i] = fields[i].trim().replaceAll("^\"|\"$", "");
+                    fields[i] = fields[i].trim();
+                    if (fields[i].startsWith("\"") && fields[i].endsWith("\"")) {
+                        fields[i] = fields[i].substring(1, fields[i].length() - 1);
+                    }
+                    fields[i] = fields[i].replace("\"", "");
                 }
 
                 Article article = new Article(
@@ -95,7 +94,6 @@ public class SearchEngine {
 
                 articleMap.put(article.getId(), article);
 
-                String articleId = article.getId();
                 String textToIndex = article.getHeadLine() + " " + article.getArticleText();
                 String[] words = cleanText(textToIndex);
 
@@ -103,33 +101,48 @@ public class SearchEngine {
                     MyMap<String, Integer> wordFrequencyMap = indexMap.get(word);
 
                     if (wordFrequencyMap == null) {
-                        wordFrequencyMap = new HashMap<>(
-                                defaultInnerMapLF,
-                                HashMap.PAF,
-                                HashMap.DH
-                        );
+                        wordFrequencyMap = new HashMap<>(0.8, HashMap.PAF, HashMap.DH);
                         indexMap.put(word, wordFrequencyMap);
                     }
 
-                    Integer count = wordFrequencyMap.get(articleId);
-                    if (count == null) {
-                        count = 0;
-                    }
-                    wordFrequencyMap.put(articleId, count + 1);
+                    Integer count = wordFrequencyMap.get(article.getId());
+                    if (count == null) count = 0;
+
+                    wordFrequencyMap.put(article.getId(), count + 1);
                 }
             }
+            scanner.close();
 
         } catch (FileNotFoundException e) {
-            System.err.println("Hata: Ana CSV dosyası bulunamadı: " + csvFile);
-            e.printStackTrace();
+            System.out.println("Hata: CSV dosyasi yok: " + csvFile);
         }
 
-        this.indexingTimeMillis = System.currentTimeMillis() - startTime;
+        this.indexingTimeMillis = System.currentTimeMillis() - start;
+    }
+
+    private String[] parseCSVLineFast(String line) {
+        List<String> list = new ArrayList<>();
+        Matcher m = CSV_PATTERN.matcher(line);
+
+        while (m.find()) {
+            String match = m.group();
+            if (m.group(1) != null) {
+                list.add(m.group(1));
+            } else {
+                list.add(match.replace(",", ""));
+            }
+        }
+
+        if (list.isEmpty() && !line.isEmpty()) {
+            return line.split(",");
+        }
+
+        return list.toArray(new String[0]);
     }
 
     public String[] cleanText(String text) {
         String lower = text.toLowerCase();
-        String cleaned = lower.replaceAll(this.delimiterRegex, " ");
+        String cleaned = lower.replaceAll("[\\p{Punct}\\s]", " ");
         String[] words = cleaned.trim().split("\\s+");
 
         ArrayList<String> filteredWords = new ArrayList<>();
@@ -142,19 +155,13 @@ public class SearchEngine {
     }
 
     public Article searchByID(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            return null;
-        }
+        if (id == null) return null;
         return articleMap.get(id.trim());
     }
 
     public List<ArticleScore> searchByText(String query) {
-
         String[] queryWords = cleanText(query);
-
-        MyMap<String, Integer> articleScores = new HashMap<>(
-                0.8, HashMap.PAF, HashMap.DH
-        );
+        MyMap<String, Integer> articleScores = new HashMap<>(0.8, HashMap.PAF, HashMap.DH);
 
         for (String word : queryWords) {
             MyMap<String, Integer> wordFrequencyMap = indexMap.get(word);
@@ -163,14 +170,10 @@ public class SearchEngine {
                 List<String> articleIdsInWord = wordFrequencyMap.getKeys();
 
                 for (String articleId : articleIdsInWord) {
-
                     Integer count = wordFrequencyMap.get(articleId);
-
                     if (count != null) {
                         Integer currentScore = articleScores.get(articleId);
-                        if (currentScore == null) {
-                            currentScore = 0;
-                        }
+                        if (currentScore == null) currentScore = 0;
                         articleScores.put(articleId, currentScore + count);
                     }
                 }
@@ -178,21 +181,24 @@ public class SearchEngine {
         }
 
         List<String> scoredArticleIds = articleScores.getKeys();
-
         List<ArticleScore> scoreList = new ArrayList<>();
+
         for (String articleId : scoredArticleIds) {
-
-            Integer score = articleScores.get(articleId);
-
-            if (score != null) {
-                scoreList.add(new ArticleScore(articleId, score));
-            }
+            scoreList.add(new ArticleScore(articleId, articleScores.get(articleId)));
         }
 
-        scoreList.sort(Comparator.comparing(ArticleScore::getScore).reversed());
+        Collections.sort(scoreList, new Comparator<ArticleScore>() {
+            @Override
+            public int compare(ArticleScore o1, ArticleScore o2) {
+                return Integer.compare(o2.score, o1.score);
+            }
+        });
 
-        int toIndex = Math.min(5, scoreList.size());
-        return scoreList.subList(0, toIndex);
+        if (scoreList.size() > 5) {
+            return scoreList.subList(0, 5);
+        } else {
+            return scoreList;
+        }
     }
 
     public long getIndexingTime() {
