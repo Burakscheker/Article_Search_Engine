@@ -144,6 +144,7 @@ public class HashMap<K, V> implements MyMap<K, V> {
         for (int i = 0; i < key.length(); i++) {
             hash += (int) key.charAt(i);
         }
+        hash = hash * 100;
         return hash;
     }
 

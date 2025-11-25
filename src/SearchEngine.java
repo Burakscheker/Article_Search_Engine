@@ -1,4 +1,3 @@
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -63,13 +62,19 @@ public class SearchEngine {
         }
     }
 
+    // --- BURASI DUZELTILEN KISIM ---
     public void loadArticles(String csvFile) {
         long start = System.currentTimeMillis();
 
         try {
             Scanner scanner = new Scanner(new File(csvFile), "UTF-8");
 
+            // Başlık satırını atla
             if (scanner.hasNextLine()) scanner.nextLine();
+
+            // Min kelime takibi için değişkenler
+            String minArticleId = "Yok";
+            int minWordCount = Integer.MAX_VALUE;
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -97,6 +102,13 @@ public class SearchEngine {
                 String textToIndex = article.getHeadLine() + " " + article.getArticleText();
                 String[] words = cleanText(textToIndex);
 
+                // --- 1. MİNİMUM KONTROLÜ ---
+                if (words.length < minWordCount) {
+                    minWordCount = words.length;
+                    minArticleId = article.getId();
+                }
+
+                // --- 2. İNDEKSLEME ---
                 for (String word : words) {
                     MyMap<String, Integer> wordFrequencyMap = indexMap.get(word);
 
@@ -110,8 +122,16 @@ public class SearchEngine {
 
                     wordFrequencyMap.put(article.getId(), count + 1);
                 }
-            }
+            } // While bitişi
+
             scanner.close();
+
+            // --- SONUCU YAZDIR ---
+            System.out.println("=========================================");
+            System.out.println("EN AZ KELİME İÇEREN MAKALE BULUNDU:");
+            System.out.println("Article ID: " + minArticleId);
+            System.out.println("Indexlenen Kelime Sayısı: " + minWordCount);
+            System.out.println("=========================================");
 
         } catch (FileNotFoundException e) {
             System.out.println("Hata: CSV dosyasi yok: " + csvFile);
@@ -120,14 +140,15 @@ public class SearchEngine {
         this.indexingTimeMillis = System.currentTimeMillis() - start;
     }
 
+    // --- EKSİK OLAN METODLAR BURADA ---
     private String[] parseCSVLineFast(String line) {
         List<String> list = new ArrayList<>();
-        Matcher m = CSV_PATTERN.matcher(line);
+        Matcher matcher = CSV_PATTERN.matcher(line);
 
-        while (m.find()) {
-            String match = m.group();
-            if (m.group(1) != null) {
-                list.add(m.group(1));
+        while (matcher.find()) {
+            String match = matcher.group();
+            if (matcher.group(1) != null) {
+                list.add(matcher.group(1));
             } else {
                 list.add(match.replace(",", ""));
             }
