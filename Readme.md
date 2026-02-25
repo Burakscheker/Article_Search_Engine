@@ -1,47 +1,49 @@
-# Article Search Engine
+# 🚀 Article Search Engine
 
-Bu proje, büyük ölçekli haber verileri (CNN Makaleleri) üzerinde hızlı ve verimli aramalar yapabilmek için geliştirilmiş Java tabanlı bir arama motorudur. Proje, standart Java koleksiyonları yerine performansı optimize etmek amacıyla özel olarak implement edilmiş veri yapılarını ve hash algoritmalarını kullanır.
+This project is a Java-based search engine developed to perform fast and efficient searches on large-scale news data (CNN Articles). Instead of standard Java collections, the project uses custom-implemented data structures and hash algorithms to optimize performance.
 
-## 🚀 Özellikler
+## 🌟 Features
 
-* **Özel Veri Yapıları:** Performansı artırmak için çakışma (collision) yönetimi ve hash algoritmaları özelleştirilmiş bir `HashMap` yapısı geliştirilmiştir.
-* **Gelişmiş Hash Algoritmaları:**
-    * **SSF (Simple Summation Function):** Karakterlerin ASCII değerlerinin toplamına dayalı temel hash hesaplama.
-    * **PAF (Polynomial Accumulation Function):** Çakışmaları minimize eden polinom tabanlı gelişmiş hash hesaplama.
-* **Çakışma Çözümleme Stratejileri:**
-    * **Linear Probing (Doğrusal Yoklama).**
-    * **Double Hashing (Çift Hashleme).**
-* **Metin Ön İşleme:** Makale metinleri işlenirken `stop_words_en.txt` dosyasındaki durak kelimeler otomatik olarak filtrelenir.
-* **Performans Analizi (Benchmarking):** Farklı yük faktörleri (Load Factor) ve algoritma kombinasyonları için `search.txt` dosyasındaki veriler kullanılarak detaylı hız ve çakışma testleri gerçekleştirilir.
+* **Custom Data Structures:** A custom `HashMap` structure with specialized collision management and hash algorithms has been developed to increase performance.
+* **Advanced Hash Algorithms:**
+    * **SSF (Simple Summation Function):** Basic hash calculation based on the sum of the ASCII values of the characters.
+    * **PAF (Polynomial Accumulation Function):** Advanced polynomial-based hash calculation that minimizes collisions.
+* **Collision Resolution Strategies:**
+    * **Linear Probing.**
+    * **Double Hashing.**
+* **Text Preprocessing:** Stop words from the `stop_words_en.txt` file are automatically filtered out when processing article texts.
+* **Performance Analysis (Benchmarking):** Detailed speed and collision tests are performed using the data in the `search.txt` file for different load factors and algorithm combinations.
 
-## 🛠 Kullanılan Teknolojiler
+## 🛠️ Tech Stack
 
-* **Dil:** Java
-* **Veri Kaynağı:** Yaklaşık 160MB boyutunda, Git LFS ile yönetilen `CNN_Articels.csv` dosyası.
-* **Veri Yönetimi:** .gitattributes üzerinden yapılandırılmış LFS filtreleri.
-* **Metin İşleme:** Regex (Düzenli İfadeler) ile CSV ayrıştırma ve metin temizleme işlemleri.
+* **Language:** Java
+* **Data Source:** An approximately 160MB `CNN_Articels.csv` file managed with Git LFS.
+* **Data Management:** LFS filters configured via `.gitattributes`.
+* **Text Processing:** CSV parsing and text cleaning operations using Regex (Regular Expressions).
 
-## 📋 Kurulum
+## 📋 Installation
 
-1.  Projeyi yerel makinenize klonlayın:
-    ```bash
-    git clone [https://github.com/Burakscheker/TradeEngine.git](https://github.com/Burakscheker/TradeEngine.git)
-    ```
-2.  Proje kök dizininde şu dosyaların bulunduğundan emin olun:
+1. Clone the project to your local machine:
+   ```bash
+   git clone [https://github.com/Burakscheker/Article_Search_Engine.git](https://github.com/Burakscheker/Article_Search_Engine.git)
+2.  Ensure the following files are present in the project's root directory:
     * `CNN_Articels.csv`
     * `stop_words_en.txt`
     * `search.txt`
-3.  Projeyi bir Java IDE'si (IntelliJ IDEA, Eclipse vb.) ile açın veya terminal üzerinden derleyin.
+3.  Open the project with a Java IDE (IntelliJ IDEA, Eclipse, etc.) or compile it via the terminal.
 
-## 💻 Kullanım
+## 💻 Usage
 
-Uygulama başlatıldığında interaktif bir menü üzerinden şu işlemler gerçekleştirilebilir:
+When the application is launched, the following operations can be performed via an interactive menu:
 
-1.  **Metin ile Arama:** Kullanıcıdan alınan kelimelere göre en alakalı 5 makaleyi skorlayarak getirir.
-2.  **ID ile Arama:** Belirli bir makale ID'si girilerek o makaleye ait tüm detayların (Başlık, Yazar, Tarih, İçerik) görüntülenmesini sağlar.
-3.  **Benchmark Testleri:** Farklı hash ve çakışma algoritmalarının performans sonuçlarını (indeksleme süresi, çakışma sayısı vb.) bir matris halinde sunar.
-4.  **Çıkış:** Uygulamayı sonlandırır.
+**Search by Text:** Scores and retrieves the top 5 most relevant articles based on the words entered by the user.
 
-### Geliştiren : Ömür Burak Şeker
+**Search by ID:** Displays all details (Headline, Author, Date, Content) of a specific article by entering its ID.
+
+**Benchmark Tests:** Presents the performance results (indexing time, number of collisions, etc.) of different hash and collision algorithms in a matrix format.
+
+**Exit:** Terminates the application.
+
+### Developer : Ömür Burak Şeker
 
 ---
